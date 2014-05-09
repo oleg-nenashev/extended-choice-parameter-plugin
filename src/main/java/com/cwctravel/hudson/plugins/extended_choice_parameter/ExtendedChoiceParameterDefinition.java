@@ -41,6 +41,7 @@ import au.com.bytecode.opencsv.CSVReader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import hudson.cli.CLICommand;
 
 public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 	private static final long serialVersionUID = -2946187268529865645L;
@@ -187,6 +188,16 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 	@Override
 	public ParameterValue createValue(StaplerRequest request) {
 		String[] requestValues = request.getParameterValues(getName());
+                return createValue(requestValues);
+        }
+
+        @Override
+        public ParameterValue createValue(CLICommand command, String value) throws IOException, InterruptedException {
+                String[] requestValues = (value != null) ? value.split(",") : null;
+                return createValue(requestValues);
+        }
+               
+	/*package*/ ParameterValue createValue(String[] requestValues) {
 		if(requestValues == null || requestValues.length == 0) {
 			return getDefaultParameterValue();
 		}
