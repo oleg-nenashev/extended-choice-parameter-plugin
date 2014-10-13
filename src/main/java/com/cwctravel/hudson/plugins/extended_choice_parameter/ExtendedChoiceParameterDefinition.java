@@ -124,6 +124,16 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 		{
 			return doCheckPropertyFile(defaultPropertyFile, defaultPropertyKey, type);
 		}
+                
+                public FormValidation doCheckMultiLevelSelectDelimiter(@QueryParameter final String value)
+                {
+                    try {
+                        MultiLevelSelectHelper.getRawDelimiter(value);
+                        return FormValidation.ok(); 
+                    } catch (IOException ex) {
+                        return FormValidation.error(ex.getMessage());
+                    }
+                }
 	}
 
 	private boolean quoteValue;
@@ -145,15 +155,16 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 	private String defaultPropertyKey;
 	
 	private String multiSelectDelimiter;
+        
+        private String multiLevelSelectDelimiter;
 
-	@DataBoundConstructor
-	public ExtendedChoiceParameterDefinition(String name, String type, String value, String propertyFile, String propertyKey, String defaultValue,
+        @DataBoundConstructor
+        public ExtendedChoiceParameterDefinition(String name, String type, String value, String propertyFile, String propertyKey, String defaultValue,
 			String defaultPropertyFile, String defaultPropertyKey, boolean quoteValue, int visibleItemCount, String description,
-			String multiSelectDelimiter) {
-		super(name, description);
-		this.type = type;
-
-		this.propertyFile = propertyFile;
+			String multiSelectDelimiter, String multiLevelSelectDelimiter) {
+                super(name, description);
+		this.type = type;    
+                this.propertyFile = propertyFile;
 		this.propertyKey = propertyKey;
 
 		this.defaultPropertyFile = defaultPropertyFile;
@@ -170,6 +181,16 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 			multiSelectDelimiter = ",";
 		}
 		this.multiSelectDelimiter = multiSelectDelimiter;
+                this.multiLevelSelectDelimiter = multiLevelSelectDelimiter;
+        }
+
+	@Deprecated
+	public ExtendedChoiceParameterDefinition(String name, String type, String value, String propertyFile, String propertyKey, 
+                        String defaultValue, String defaultPropertyFile, String defaultPropertyKey, boolean quoteValue, 
+                        int visibleItemCount, String description, String multiSelectDelimiter) {
+		this(name, type, value, propertyFile, propertyKey, defaultValue, defaultPropertyFile, 
+                        defaultPropertyKey, quoteValue, visibleItemCount, description, multiSelectDelimiter, 
+                        null);
 	}
 
 	private Map<String, Boolean> computeDefaultValueMap() {
@@ -383,7 +404,7 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
                     new InputStreamReader(propertyFileUrl.openStream()));
              }
                                  
-            List<String[]> fileLines = new CSVReader(rdr, '\t').readAll();
+            List<String[]> fileLines = new CSVReader(rdr, getRawMultiLevelSelectDelimiter()).readAll();
   
 
 		if (fileLines.size() < 2)
@@ -471,7 +492,32 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 				 + name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma BE2C,"
 				 + name + " dropdown MultiLevelMultiSelect 0 ZZ23 Neuroblastoma SKNAS";*/
 	}
-	
+
+        /**
+         * Retrieves an encoded Multi-Level select delimiter.
+         * This method is dedicated to be used on configuration pages.
+         * @return Encoded value
+         * @since TODO: define a version
+         */
+        public String getMultiLevelSelectDelimiter() {
+            return multiLevelSelectDelimiter != null 
+                    ? multiLevelSelectDelimiter
+                    : MultiLevelSelectHelper.getDefaultDelimiter().getEncodedString();
+        }
+        
+        /**
+         * Gets a decoded Multi-Level select delimiter.
+         * @return Decoded delimiter. The default delimiter will be returned if the decoding fails.
+         * @since TODO: define a version
+         */
+        public char getRawMultiLevelSelectDelimiter() {
+            try {
+                return MultiLevelSelectHelper.getRawDelimiter(getMultiLevelSelectDelimiter());
+            } catch (IOException ex) {
+                return MultiLevelSelectHelper.getDefaultDelimiter().getResultString();
+            }
+        }
+        
 	public Map<String, String> getChoicesByDropdownId() throws Exception
 	{
 		LinkedHashMap<String, LinkedHashSet<String>> choicesByDropdownId = 
