@@ -42,6 +42,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import hudson.cli.CLICommand;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 	private static final long serialVersionUID = -2946187268529865645L;
@@ -213,9 +215,20 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
         }
 
         @Override
-        public ParameterValue createValue(CLICommand command, String value) throws IOException, InterruptedException {
-                String[] requestValues = (value != null) ? value.split(",") : null;
-                return createValue(requestValues);
+        public @CheckForNull ParameterValue createValue(CLICommand command, String value) throws IOException, InterruptedException {
+                return createValue(value);
+        }
+        
+        /**
+         * Creates a value from a string.
+         * Comma will be used as a delimiter for multiple values.
+         * @param value Input string
+         * @return Created value or null if there's an empty string or error.
+         * @since TODO
+         */
+        public @CheckForNull ParameterValue createValue(@CheckForNull String value) {
+                final String[] values = (value != null) ? value.split(",") : null;
+                return createValue(values);
         }
                
 	/*package*/ ParameterValue createValue(String[] requestValues) {
@@ -290,14 +303,11 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 
 	@Override
 	public ParameterValue getDefaultParameterValue() {
-		String defaultValue = getEffectiveDefaultValue();
-		if(!StringUtils.isBlank(defaultValue)) {
-			if(quoteValue) {
-				defaultValue = "\"" + defaultValue + "\"";
-			}
-			return new ExtendedChoiceParameterValue(getName(), defaultValue);
-		}
-		return super.getDefaultParameterValue();
+                String effectiveDefaultValue = getEffectiveDefaultValue();
+		if(quoteValue && !StringUtils.isBlank(effectiveDefaultValue)) {
+			effectiveDefaultValue = "\"" + effectiveDefaultValue + "\"";
+		}            
+                return createValue(effectiveDefaultValue);
 	}
 	
 	// note that computeValue is not called by multiLevel.jelly
