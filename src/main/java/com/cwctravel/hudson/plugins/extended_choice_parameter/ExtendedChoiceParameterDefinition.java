@@ -304,14 +304,18 @@ public class ExtendedChoiceParameterDefinition extends ParameterDefinition {
 	@Override
 	public ParameterValue getDefaultParameterValue() {
                 String effectiveDefaultValue = getEffectiveDefaultValue();
-		if(quoteValue && !StringUtils.isBlank(effectiveDefaultValue)) {
+		if (StringUtils.isBlank(effectiveDefaultValue)) {
+                    return null;
+                } 
+                if(quoteValue) {
 			effectiveDefaultValue = "\"" + effectiveDefaultValue + "\"";
-		}            
+		}  
                 return createValue(effectiveDefaultValue);
+                
 	}
 	
 	// note that computeValue is not called by multiLevel.jelly
-	private String computeValue(String value, String propertyFilePath, String propertyKey) {
+	private @CheckForNull String computeValue(String value, String propertyFilePath, String propertyKey) {
 		if(!StringUtils.isBlank(propertyFile) && !StringUtils.isBlank(propertyKey)) {
 			try {
 
